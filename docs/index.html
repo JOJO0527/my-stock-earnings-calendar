@@ -11,7 +11,7 @@
 <p><small>名称建议：自选股财报｜GitHub自动更新。请使用订阅，不要只下载并导入一次。</small></p>
 </section>
 <section><h2 style="margin-top:0">本次日历文件</h2><p id="feed-status">正在检查订阅文件…</p><ul id="events"></ul>
-<p><small>只显示 Nasdaq 在滚动窗口内提供的事件。日期可能为预计日期；盘前/盘后按美国市场理解，以公司公告为准。某只股票未出现不代表没有财报。</small></p></section>
+<p><small>有时段的事件按北京时间显示，并明确标注预计参考点；无时段的全天事件显示美国日期、时间待确认。盘后参考为美东16:00，盘前参考为美东08:00，均非公司确认发布时间，也不是电话会时间。</small></p></section>
 <h2>初始配置的16只股票</h2><p>BE · SNDK · GOOG · AEHR · AVGO · ALAB · LITE · COHR · DELL · TSM · INTC · AMD · SPCX · MRVL · MU · FORM</p>
 <p><small>后续修改后的实际名单以仓库 CUSTOM_STOCKS 变量为准。</small></p>
 <h2>以后在哪里找到它</h2><ul>
@@ -26,5 +26,39 @@
 </ol><p>停止任务后，已发布的文件可能仍可访问；删除仓库后订阅网址会失效。</p>
 <footer>基于 <a href="https://github.com/jason5ng32/OhEarningsCal">OhEarningsCal</a> · 数据来源 Nasdaq · GitHub Actions / Pages<br>这是公开可访问的观察名单日历。</footer>
 <script>
-(async()=>{const status=document.getElementById('feed-status');try{const r=await fetch('./ics/customstock.ics',{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);const text=(await r.text()).replace(/\r?\n[ \t]/g,'');if(!text.includes('BEGIN:VCALENDAR'))throw new Error('无效日历文件');const blocks=text.split('BEGIN:VEVENT').slice(1);status.textContent='当前文件包含 '+blocks.length+' 条财报事件。日期为美国市场日期，以下按订阅文件原样显示。';for(const block of blocks){const summary=block.match(/^SUMMARY:(.*)$/m)?.[1]?.trim()||'财报';const date=block.match(/^DTSTART(?:;[^:]*)?:(\d{8})/m)?.[1]||'';const li=document.createElement('li');li.textContent=(date?date.slice(0,4)+'-'+date.slice(4,6)+'-'+date.slice(6,8)+' · ':'')+summary;document.getElementById('events').appendChild(li);}}catch(e){status.textContent='订阅文件暂时无法读取，请通过运行记录检查部署状态：'+e.message;}})();
+const beijing = new Intl.DateTimeFormat('zh-CN', {
+  timeZone: 'Asia/Shanghai', hourCycle: 'h23',
+  year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+});
+function utcInstant(value) {
+  const m = value.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/);
+  if (!m) throw new Error('无法识别的事件时区');
+  return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]));
+}
+(async () => {
+  const status = document.getElementById('feed-status');
+  try {
+    const response = await fetch('./ics/customstock.ics', { cache: 'no-store' });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    const text = (await response.text()).replace(/\r?\n[ \t]/g, '');
+    if (!text.includes('BEGIN:VCALENDAR')) throw new Error('无效日历文件');
+    const blocks = text.split('BEGIN:VEVENT').slice(1);
+    const modified = text.match(/^LAST-MODIFIED:(\S+)/m)?.[1];
+    status.textContent = '当前文件包含 ' + blocks.length + ' 条财报提醒。定时事件显示北京时间；全天占位明确显示美国日期。'
+      + (modified ? ' 文件更新于北京时间 ' + beijing.format(utcInstant(modified)) + '。' : '');
+    for (const block of blocks) {
+      const summary = (block.match(/^SUMMARY:(.*)$/m)?.[1]?.trim() || '财报').replace(/\\([,;\\])/g, '$1');
+      const start = block.match(/^DTSTART(?:;[^:]*)?:([^\r\n]+)/m)?.[1];
+      if (!start) throw new Error('事件缺少日期');
+      const display = /^\d{8}$/.test(start)
+        ? '美国日期 ' + start.slice(0, 4) + '-' + start.slice(4, 6) + '-' + start.slice(6, 8) + '（时间待确认）'
+        : '北京时间 ' + beijing.format(utcInstant(start));
+      const li = document.createElement('li');
+      li.textContent = display + ' · ' + summary;
+      document.getElementById('events').appendChild(li);
+    }
+  } catch (error) {
+    status.textContent = '订阅文件暂时无法读取，请通过运行记录检查部署状态：' + error.message;
+  }
+})();
 </script></body></html>
