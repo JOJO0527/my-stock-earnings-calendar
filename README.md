@@ -20,7 +20,9 @@ Mac：日历 → 文件 → 新建日历订阅 → 粘贴 HTTPS 地址，名称�
 
 [打开 Actions](https://github.com/JOJO0527/my-stock-earnings-calendar/actions/workflows/earnings.yml)，检查最近一次 Update earnings calendar 是否成功，并查看 Fetch earnings window 日志。绿色结果也应结合获取数据的日志检查。
 
-计划为北京时间每天 12:34、次日 00:34（即每天 00:34 和 12:34），实际启动可能延迟。苹果日历另有自己的刷新周期。
+计划为北京时间每天 00:34 和 12:34，实际启动可能延迟。苹果日历另有自己的刷新周期。
+
+GitHub 对公开仓库有一个长期运行限制：连续60天没有仓库活动时，会自动停用计划工作流；仅打开网页不应当作保活保证。可在到期前更新本说明并提交；若工作流已停用，在运行页面点击 Enable workflow，然后 Run workflow。参见 [GitHub 官方说明](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)。
 
 ## 修改股票
 
